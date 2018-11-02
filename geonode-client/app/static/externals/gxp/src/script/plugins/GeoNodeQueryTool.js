@@ -126,7 +126,6 @@ gxp.plugins.GeoNodeQueryTool = Ext.extend(gxp.plugins.Tool, {
 
 
                     var localUrl = this.target.localGeoServerBaseUrl;
-                    //console.log('LCOAL URL: ' + localUrl);
 
                     var map = this.target.mapPanel.map;
                     var control;
@@ -165,7 +164,13 @@ gxp.plugins.GeoNodeQueryTool = Ext.extend(gxp.plugins.Tool, {
                             var url_parser = document.createElement('a');
                             url_parser.href = layer.url;
                             // if (layer.url.indexOf(localUrl) > -1) {
-                            if (localUrl.indexOf(url_parser.host)) {
+                            //if (localUrl.indexOf(url_parser.host)) {
+                            /* Paolo: when map is open as anonymous layer has not an access_token
+                            and for some reason identify is not working. Maybe must be improved the
+                            OpenLayers.Control.GetFeature implementation. For now let's bypass
+                            it for anonymous layers (this will cause identify just to display the centroid)
+                            */
+                            if (localUrl.indexOf('access_token') > 0) {
                                 //console.log(layer.name + 'IS LOCAL?' );
                                 var control = new OpenLayers.Control.GetFeature({
                                     protocol:OpenLayers.Protocol.WFS.fromWMSLayer(layer),
