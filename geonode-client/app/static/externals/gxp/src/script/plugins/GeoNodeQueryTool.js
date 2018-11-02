@@ -212,8 +212,10 @@ gxp.plugins.GeoNodeQueryTool = Ext.extend(gxp.plugins.Tool, {
 
 
                                                         featureInfo.title = x.get("title");
-                                                        //console.log('datalayers?:' + this.target.dataLayers[layer.params.LAYERS]);
-                                                        if (layer.attributes) {
+                                                        // the following line was changed as under certain circunstances layer.attributes was not null but with 0 attributes
+                                                        // not sure why that was happening only with some layers
+                                                        //if (layer.attributes) {
+                                                        if (layer.attributes.length > 0) {
                                                             featureInfo.queryfields = layer.attributes;
                                                             featureInfo.nameField = featureInfo.queryfields[0].id;
                                                         } else if (featureInfo.length > 0) {
