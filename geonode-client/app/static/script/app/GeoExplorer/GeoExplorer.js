@@ -68,6 +68,12 @@ var GeoExplorer = Ext.extend(gxp.Viewer, {
     localCSWBaseUrl: "",
 
     /**
+     * api: config[use_hypermap]
+     * ``String`` use HHypermap Registry or not
+     */
+    use_hypermap: true,
+
+    /**
      * api: config[hypermapRegistryUrl]
      * ``String`` url of the HHypermap Registry instance
      */
@@ -160,6 +166,9 @@ var GeoExplorer = Ext.extend(gxp.Viewer, {
     arcGisRestLabel: 'UT: Add ArcGIS REST Server',
     areaActionText: "UT:Area",
     backgroundContainerText: "UT:Background",
+    capGridAddLayersText: "UT:Add Layers",
+    capGridDoneText: "UT:Done",
+    capGridText: "UT:Available Layers",
     connErrorTitleText: "UT:Connection Error",
     connErrorText: "UT:The server returned an error",
     connErrorDetailsText: "UT:Details...",
@@ -170,7 +179,7 @@ var GeoExplorer = Ext.extend(gxp.Viewer, {
     helpLabel: 'UT: Help',
     infoButtonText: "UT:Info",
     infoActionText: "UT:About",
-    infoBtnText: "About",
+    infoBtnText: "UT:About",
     largeSizeLabel: 'UT:Large',
     layerAdditionLabel: "UT: Add another server",
     layerLocalLabel: 'UT:Upload your own data',
@@ -244,12 +253,13 @@ var GeoExplorer = Ext.extend(gxp.Viewer, {
     picasaText: 'Picasa',
     youTubeText: 'YouTube',
     hglText: "Harvard Geospatial Library",
+    moreText: 'More...',
     uploadLayerText: 'Upload Layer',
     createLayerText: 'Create Layer',
     rectifyLayerText: 'Rectify Layer',
     submitendpointText: 'Submit a Map Service',
     worldmapDataText: 'Search',
-    externalDataText: 'External Data',
+    externalDataText: 'Layers',
     leavePageWarningText: 'If you leave this page, unsaved changes will be lost.',
 
     constructor: function(config) {
@@ -1140,7 +1150,8 @@ var GeoExplorer = Ext.extend(gxp.Viewer, {
         //Get all the required WMS parameters from the GeoNode/Worldmap database
         // instead of GetCapabilities
 
-        var typename = this.searchTable.getlayerTypename(thisRecord);
+        // var typename = this.searchTable.getlayerTypename(thisRecord);
+        var typename = thisRecord.get("name");
         var tiled = thisRecord.get("tiled") || true;
 
         var layer_bbox = [
@@ -1317,6 +1328,56 @@ var GeoExplorer = Ext.extend(gxp.Viewer, {
         this.searchWindow.hide();
     },
 
+    addLayerAjax2: function (dataSource, dataKey, dataRecords) {
+        var geoEx = this;
+        var key = dataKey;
+        var records = dataRecords;
+        var source = dataSource;
+
+        var layerStore = this.mapPanel.layers;
+        // var isLocal = source instanceof gxp.plugins.GeoNodeSource;
+        isLocal = true; // for now other sources disabled
+        for (var i = 0, ii = records.length; i < ii; ++i) {
+            var thisRecord = records[i];
+            if (isLocal){
+                var authorized = true;
+                /*
+                if (!$.parseJSON(thisRecord.get('Is_Public'))){
+                   geoEx.testLayerPermission(thisRecord, source, layerStore, key);
+                } else {
+                    geoEx.addLocalLayer(thisRecord, source, layerStore, key);
+                }
+                */
+                geoEx.addLocalLayer(thisRecord, source, layerStore, key);
+            } else {
+                //Not a local GeoNode layer, use source's standard method for creating the layer.
+                var layer = records[i].get("name");
+                var record = source.createLayerRecord({
+                    name: layer,
+                    source: key,
+                    buffer: 0
+                });
+                //alert(layer + " created after FAIL");
+                if (record) {
+                    if (record.get("group") === "background") {
+                        var pos = layerStore.queryBy(
+                            function(rec) {
+                                return rec.get("group") === "background"
+                            }).getCount();
+                        layerStore.insert(pos, [record]);
+                    } else {
+                        category = "General";
+                        record.set("group", category);
+
+                        geoEx.layerTree.addCategoryFolder({"group":record.get("group")}, true);
+                        layerStore.add([record]);
+                    }
+                }
+            }
+        }
+        this.searchWindow.hide();
+    },
+
     addEsriSourceAndLayer: function(layerStore, layer, layer_detail_url){
       this.addLayerSource({
           config: {url: layer.url, ptype: 'gxp_arcrestsource'},
@@ -1412,6 +1473,239 @@ var GeoExplorer = Ext.extend(gxp.Viewer, {
 //                    scope: this
 //                }
 //            });
+    },
+
+    /**
+     * Method: initCapGrid
+     * Constructs a window with a capabilities grid.
+     */
+    initCapGrid: function() {
+        var geoEx = this;
+        var initialSourceId, source, data = [];
+        for (var id in this.layerSources) {
+            source = this.layerSources[id];
+            if (source instanceof gxp.plugins.GeoNodeSource && source.url.replace(this.urlPortRegEx, "$1/").indexOf(this.localGeoServerBaseUrl.replace(this.urlPortRegEx, "$1/")) === 0) {
+                //do nothing
+            } else {
+                if (source.store) {
+                    data.push([id, this.layerSources[id].title || id]);
+                }
+            }
+        }
+
+        if (data[0] && data[0][0])
+            initialSourceId = data[0][0];
+
+
+        var sources = new Ext.data.ArrayStore({
+            fields: ["id", "title"],
+            data: data
+        });
+
+        var expander = new GeoExplorer.CapabilitiesRowExpander({
+            ows: this.localGeoServerBaseUrl + "ows"
+        });
+
+
+        var addLocalLayers = function() {
+            if (!this.mapID) {
+                Ext.Msg.alert("Save your Map View", "You must save this map view before uploading your data");
+            }
+            else
+                document.location.href = "/data/upload?map=" + this.mapID;
+        };
+
+
+        var addLayers = function() {
+            var key = sourceComboBox.getValue();
+            var layerStore = this.mapPanel.layers;
+            var source = this.layerSources[key];
+            var records = capGridPanel.getSelectionModel().getSelections();
+            this.addLayerAjax2(source, key, records);
+        };
+
+        var source = null;
+
+        if (initialSourceId) {
+            source = this.layerSources[initialSourceId];
+            source.store.filterBy(function(r) {
+                return !!source.getProjection(r);
+            }, this);
+        }
+
+        var capGridPanel = new Ext.grid.GridPanel({
+            store: source != null ? source.store : [],
+            height:300,
+            region:'center',
+            autoScroll: true,
+            autoExpandColumn: "title",
+            plugins: [expander],
+            colModel: new Ext.grid.ColumnModel([
+                expander,
+                {id: "title", header: "Title", dataIndex: "title", sortable: true}
+            ]),
+            listeners: {
+                rowdblclick: addLayers,
+                scope: this
+            }
+        });
+
+        var sourceComboBox = new Ext.form.ComboBox({
+            store: sources,
+            valueField: "id",
+            displayField: "title",
+            triggerAction: "all",
+            editable: false,
+            allowBlank: false,
+            forceSelection: true,
+            mode: "local",
+            value: initialSourceId,
+            listeners: {
+                select: function(combo, record, index) {
+                    var source = this.layerSources[record.get("id")];
+                    var store = source.store;
+                    store.setDefaultSort('title', 'asc');
+                    store.filterBy(function(r) {
+                        return !!source.getProjection(r);
+                    }, this);
+                    expander.ows = store.url;
+                    capGridPanel.reconfigure(store, capGridPanel.getColumnModel());
+                    // TODO: remove the following when this Ext issue is addressed
+                    // http://www.extjs.com/forum/showthread.php?100345-GridPanel-reconfigure-should-refocus-view-to-correct-scroller-height&p=471843
+                    capGridPanel.getView().focusRow(0);
+                },
+                scope: this
+            }
+        });
+
+
+        var addWmsButton = new Ext.Button({
+            text: this.layerAdditionLabel,
+            iconCls: 'icon-add',
+            cls: 'x-btn-link-medium x-btn-text',
+            handler: function() {
+                newSourceWindow.show();
+            }
+        });
+
+
+        var addFeedButton = new Ext.Button({
+            text: this.feedAdditionLabel,
+            iconCls: 'icon-add',
+            cls:  'x-btn-link-medium x-btn-text',
+            handler: function() {
+                this.showFeedDialog();
+                this.searchWindow.hide();
+                newSourceWindow.hide();
+
+            },
+            scope: this
+        });
+
+        var app = this;
+        var newSourceWindow = new gxp.NewSourceWindow({
+            modal: true,
+            listeners: {
+                "server-added": function(url, type) {
+                    newSourceWindow.setLoading();
+                    app.addLayerSource({
+                        config: {url: url, ptype: type},
+                        callback: function(id) {
+                            // add to combo and select
+                            var record = new sources.recordType({
+                                id: id,
+                                title: app.layerSources[id].title || "Untitled" // TODO: titles
+                            });
+                            sources.insert(0, [record]);
+                            sourceComboBox.onSelect(record, 0);
+                            newSourceWindow.hide();
+                        },
+                        fallback: function() {
+                            // TODO: wire up success/failure
+                            newSourceWindow.setError("Error contacting server.\nPlease check the url and try again.");
+                            app.busyMask.hide();
+                        },
+                        scope: app
+                    });
+                }
+            },
+            // hack to get the busy mask so we can close it in case of a
+            // communication failure
+            addSource: function(url, success, failure, scope) {
+                app.busyMask = scope.loadMask;
+            }
+        });
+
+
+        var addLayerButton = new Ext.Button({
+            text: "Add Layers",
+            iconCls: "gxp-icon-addlayers",
+            handler: addLayers,
+            scope : this
+        });
+
+/*
+        var sourceAdditionLabel = { xtype: 'box', autoEl: { tag: 'span',  html: this.layerSelectionLabel }};
+
+        var sourceForm = new Ext.Panel({
+            frame:false,
+            border: false,
+            region: 'north',
+            height:40,
+            layout: new Ext.layout.HBoxLayout({
+                defaultMargins: {
+                    top: 10,
+                    bottom: 10,
+                    left: 10,
+                    right: 0
+                }
+            }),
+            items: [sourceAdditionLabel, sourceComboBox, {xtype: 'spacer', width:20 }, addWmsButton, addFeedButton]
+        });
+*/
+
+        var addLayerForm = new Ext.Panel({
+            frame:false,
+            border: false,
+            region: 'south',
+            layout: new Ext.layout.HBoxLayout({
+                defaultMargins: {
+                    top: 10,
+                    bottom: 10,
+                    left: 10,
+                    right: 0
+                }
+            }),
+            items: [addLayerButton]
+        });
+
+        this.capGrid = new Ext.Panel({
+            autoScroll: true,
+            title: this.externalDataText,
+            header: false,
+            layout: 'border',
+            border: false,
+            renderTo: 'externalDiv',
+            padding:'2 0 0 20',
+            // items: [sourceForm, capGridPanel, addLayerForm],
+            items: [capGridPanel, addLayerForm],
+            listeners: {
+                hide: function(win) {
+                    capGridPanel.getSelectionModel().clearSelections();
+                }
+            }
+        });
+    },
+
+    /**
+     * Method: showCapabilitiesGrid
+     * Shows the window with a capabilities grid.
+     */
+    showCapabilitiesGrid: function() {
+        if (!this.capGrid) {
+            this.initCapGrid();
+        }
+        this.capGrid.show();
     },
 
     /** private: method[createMapOverlay]
@@ -1540,10 +1834,11 @@ var GeoExplorer = Ext.extend(gxp.Viewer, {
         var infoButton = new Ext.Button({
             id: 'infoButtonId',
             tooltip: this.infoActionText,
-            text: 'About',
+            text: '<span class="x-btn-text">' + this.infoBtnText + '</span>',
             handler: this.showInfoWindow,
             scope:this
         });
+
 
         var flickrMenuItem = {
             text: this.flickrText,
@@ -1591,6 +1886,22 @@ var GeoExplorer = Ext.extend(gxp.Viewer, {
             },
             scope: this
         };
+
+        var moreButton = new Ext.Button({
+            text: this.moreText,
+            cls: "more-overlay-element",
+            id: 'moreBtn',
+            menu: {
+                items: [
+                    flickrMenuItem,
+                    picasaMenuItem,
+                    youtubeMenuItem,
+                    hglMenuItem
+                ]
+            }
+        });
+
+        // this.mapPanel.add(moreButton);
 
         var languageSelect = {
             xtype: 'box',
@@ -2044,12 +2355,20 @@ var GeoExplorer = Ext.extend(gxp.Viewer, {
         this.dataTabPanel = new Ext.TabPanel({
             activeTab: 0,
             region:'center',
-            items: [{
-                contentEl: 'searchDiv',
-                title: this.worldmapDataText,
-                autoScroll: true
-            }]
+            items: [
+//              {
+//                contentEl: 'searchDiv',
+//                title: this.worldmapDataText,
+//                autoScroll: true
+//              },
+              this.capGrid
+          ]
         });
+
+        if(this.use_hypermap){
+            var item_hypermap = {contentEl: 'searchDiv', title: this.worldmapDataText, autoScroll: true};
+            this.dataTabPanel.add(item_hypermap);
+        }
 
         if (this.config["edit_map"] && Ext.get("uploadDiv")) {
             this.dataTabPanel.add(this.uploadPanel);
@@ -2058,8 +2377,10 @@ var GeoExplorer = Ext.extend(gxp.Viewer, {
             }
         }
 
-        this.dataTabPanel.add(this.warperPanel);
-        this.dataTabPanel.add(this.submitEndpointPanel);
+        if(this.use_hypermap){
+            this.dataTabPanel.add(this.warperPanel);
+            this.dataTabPanel.add(this.submitEndpointPanel);
+        }
     },
 
 
@@ -2100,46 +2421,54 @@ var GeoExplorer = Ext.extend(gxp.Viewer, {
     },
 
     initSearchWindow: function() {
-        var mapBounds = this.mapPanel.map.getExtent();
-        var llbounds = mapBounds.transform(
-            new OpenLayers.Projection(this.mapPanel.map.projection),
-            new OpenLayers.Projection("EPSG:4326"));
+
+        if(this.use_hypermap){
+
+            var mapBounds = this.mapPanel.map.getExtent();
+            var llbounds = mapBounds.transform(
+                new OpenLayers.Projection(this.mapPanel.map.projection),
+                new OpenLayers.Projection("EPSG:4326"));
 
 
-        this.bbox = new GeoNode.BoundingBoxWidget({
-            proxy: "/proxy/?url=",
-            viewerConfig:this.getBoundingBoxConfig(),
-            renderTo: 'refine',
-            height: 350,
-            isEnabled: false,
-            useGxpViewer: true
-        });
+            this.bbox = new GeoNode.BoundingBoxWidget({
+                proxy: "/proxy/?url=",
+                viewerConfig:this.getBoundingBoxConfig(),
+                renderTo: 'refine',
+                height: 350,
+                isEnabled: false,
+                useGxpViewer: true
+            });
 
-        // Pass the bbox widget to heatmap so that it can accesd the search map
-        var heatmap = new GeoNode.HeatmapModel({bbox_widget: this.bbox});
+            // Pass the bbox widget to heatmap so that it can accesd the search map
+            var heatmap = new GeoNode.HeatmapModel({bbox_widget: this.bbox});
 
-        //Pass the heatmap to the searchTable so that it can trigger searches
-        this.searchTable = new GeoNode.SearchTable({
-            renderTo: 'search_form',
-            trackSelection: true,
-            permalinkURL: '/data/search',
-            // 0. use this one in production
-            searchURL: this.solrUrl,
-            layerDetailURL: '/data/search/detail',
-            constraints: [this.bbox],
-            searchParams: {'limit':10, 'bbox': llbounds.toBBOX()},
-            searchOnLoad: false,
-            heatmap: heatmap
-        });
+            //Pass the heatmap to the searchTable so that it can trigger searches
+            this.searchTable = new GeoNode.SearchTable({
+                renderTo: 'search_form',
+                trackSelection: true,
+                permalinkURL: '/data/search',
+                // 0. use this one in production
+                searchURL: this.solrUrl,
+                layerDetailURL: '/data/search/detail',
+                constraints: [this.bbox],
+                searchParams: {'limit':10, 'bbox': llbounds.toBBOX()},
+                searchOnLoad: false,
+                heatmap: heatmap
+            });
 
-        this.searchTable.hookupSearchButtons('refine');
+            this.searchTable.hookupSearchButtons('refine');
 
-        var dataCart = new GeoNode.DataCart({
-            store: this.searchTable.dataCart,
-            renderTo: 'data_cart',
-            addToMapButtonFunction: this.addWorldMapLayers,
-            addToMapButtonTarget: this
-        });
+            var dataCart = new GeoNode.DataCart({
+                store: this.searchTable.dataCart,
+                renderTo: 'data_cart',
+                addToMapButtonFunction: this.addWorldMapLayers,
+                addToMapButtonTarget: this
+            });
+        }
+
+        if (!this.capGrid) {
+            this.initCapGrid();
+        }
 
         if (!this.uploadPanel && this.config["edit_map"] && Ext.get("uploadDiv")) {
             this.initUploadPanel();
@@ -2161,20 +2490,20 @@ var GeoExplorer = Ext.extend(gxp.Viewer, {
             this.initTabPanel();
         }
 
-
         this.searchWindow = new Ext.Window({
-            id: 'ge_searchWindow',
-            title: "Search",
-            closeAction: 'hide',
-            layout: 'fit',
-            width: 900,
-            height: 590,
-            items: [this.dataTabPanel],
-            modal: true,
-            autoScroll: true,
-            resizable: true,
-            bodyStyle: 'background-color:#FFF'
-        });
+              id: 'ge_searchWindow',
+              title: "Search",
+              closeAction: 'hide',
+              layout: 'fit',
+              width: 900,
+              height: 590,
+              items: [this.dataTabPanel],
+              modal: true,
+              autoScroll: true,
+              resizable: true,
+              bodyStyle: 'background-color:#FFF'
+          });
+
     },
 
     showFeedDialog:function (selectedOption) {
@@ -2224,9 +2553,11 @@ var GeoExplorer = Ext.extend(gxp.Viewer, {
         this.searchWindow.show();
         this.searchWindow.alignTo(document, 'tl-tl');
 
-        //Apparently the ext slider has a bug in positioning the thumbs.
-        // this is a workaround, we do this after the search window has been rendered.
-        this.searchTable.dateInput.syncThumb();
+        if(this.use_hypermap){
+          //Apparently the ext slider has a bug in positioning the thumbs.
+          // this is a workaround, we do this after the search window has been rendered.
+          this.searchTable.dateInput.syncThumb();
+        }
 
         // Don't show the window if >70 layers on map (due to z-index issue with OpenLayers maps)
         if (this.mapPanel.layers.data.items.length > this.maxMapLayers) {
