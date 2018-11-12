@@ -78,6 +78,8 @@ gxp.plugins.GazetteerTool = Ext.extend(gxp.plugins.Tool, {
      */
     addActions: function() {
 
+        var tool = this;
+
         // Text field to enter search term in
         this.searchTB = new Ext.form.TextField({
             id:'search-tb',
@@ -90,7 +92,7 @@ gxp.plugins.GazetteerTool = Ext.extend(gxp.plugins.Tool, {
                     el.getEl().on('keypress', function(e) {
                             var charpress = e.keyCode;
                             if (charpress == 13) {
-                                this.performSearch();
+                                tool.performSearch();
                             }
                         }
                     );
@@ -108,7 +110,6 @@ gxp.plugins.GazetteerTool = Ext.extend(gxp.plugins.Tool, {
             scope: this
         });
 
-        var tool = this;
         var serviceCheck = function (item, e) {
             switch (item.checked) {
                 case true:
@@ -120,10 +121,10 @@ gxp.plugins.GazetteerTool = Ext.extend(gxp.plugins.Tool, {
         };
 
         // Gazetteer/Geocoder service options
-        var geocoderWorldMap = {text: 'WorldMap', id: 'worldmap', checked: true, disabled: false, hideOnClick: false, checkHandler: serviceCheck};
-        var geocoderGoogle = {text: 'Google', id: 'google', checked: true, hideOnClick: false, checkHandler: serviceCheck};
-        var geocoderNominatim = {text: 'Nominatim', id: 'nominatim', checked: false, hideOnClick: false, checkHandler: serviceCheck};
-        var geocoderGeonames = {text: 'GeoNames', id: 'geonames', checked: false, hideOnClick: false, checkHandler: serviceCheck};
+        var geocoderWorldMap = {text: 'WorldMap', id: 'worldmap', checked: (tool.services.indexOf('worldmap') > -1), disabled: false, hideOnClick: false, checkHandler: serviceCheck};
+        var geocoderGoogle = {text: 'Google', id: 'google', checked: (tool.services.indexOf('google') > -1), hideOnClick: false, checkHandler: serviceCheck};
+        var geocoderNominatim = {text: 'Nominatim', id: 'nominatim', checked: (tool.services.indexOf('nominatim') > -1), hideOnClick: false, checkHandler: serviceCheck};
+        var geocoderGeonames = {text: 'GeoNames', id: 'geonames', checked: (tool.services.indexOf('geonames') > -1), hideOnClick: false, checkHandler: serviceCheck};
 
         //Optional start date filter
         this.startDateField = new Ext.form.TextField({
