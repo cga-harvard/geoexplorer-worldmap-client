@@ -1183,13 +1183,14 @@ var GeoExplorer = Ext.extend(gxp.Viewer, {
             "local": thisRecord.get('service_type') === 'Hypermap:WorldMap'
         };
 
-        if (thisRecord.get('service_type') === 'Hypermap:WorldMap'){
-            layer_detail_url = '/data/' + thisRecord.get('name');
-        };
+        if (typeof(thisRecord.get('service_type')) == 'undefined'){
+            layer.local = true;
+        }
 
         if(layer.local){
             // url is always the generic GeoServer endpoint for WM layers
             // layer.url = this.localGeoServerBaseUrl + 'wms';
+            layer_detail_url = '/data/' + thisRecord.get('name');
             layer.url = this.localGeoServerBaseUrl.replace("/geoserver/", "/geoserver/wms");
         };
 
@@ -1481,11 +1482,13 @@ var GeoExplorer = Ext.extend(gxp.Viewer, {
      */
     initCapGrid: function() {
         var geoEx = this;
+
         var initialSourceId, source, data = [];
+
         for (var id in this.layerSources) {
             source = this.layerSources[id];
             if (source instanceof gxp.plugins.GeoNodeSource && source.url.replace(this.urlPortRegEx, "$1/").indexOf(this.localGeoServerBaseUrl.replace(this.urlPortRegEx, "$1/")) === 0) {
-                //do nothing
+                initialSourceId = source.id;
             } else {
                 if (source.store) {
                     data.push([id, this.layerSources[id].title || id]);
@@ -1493,20 +1496,23 @@ var GeoExplorer = Ext.extend(gxp.Viewer, {
             }
         }
 
+/*
         if (data[0] && data[0][0])
             initialSourceId = data[0][0];
-
+*/
+        initialSourceId = "wm";
 
         var sources = new Ext.data.ArrayStore({
             fields: ["id", "title"],
             data: data
         });
 
+
         var expander = new GeoExplorer.CapabilitiesRowExpander({
             ows: this.localGeoServerBaseUrl + "ows"
         });
 
-
+/*
         var addLocalLayers = function() {
             if (!this.mapID) {
                 Ext.Msg.alert("Save your Map View", "You must save this map view before uploading your data");
@@ -1514,7 +1520,7 @@ var GeoExplorer = Ext.extend(gxp.Viewer, {
             else
                 document.location.href = "/data/upload?map=" + this.mapID;
         };
-
+*/
 
         var addLayers = function() {
             var key = sourceComboBox.getValue();
@@ -1578,7 +1584,7 @@ var GeoExplorer = Ext.extend(gxp.Viewer, {
             }
         });
 
-
+/*
         var addWmsButton = new Ext.Button({
             text: this.layerAdditionLabel,
             iconCls: 'icon-add',
@@ -1587,8 +1593,9 @@ var GeoExplorer = Ext.extend(gxp.Viewer, {
                 newSourceWindow.show();
             }
         });
+*/
 
-
+/*
         var addFeedButton = new Ext.Button({
             text: this.feedAdditionLabel,
             iconCls: 'icon-add',
@@ -1601,8 +1608,12 @@ var GeoExplorer = Ext.extend(gxp.Viewer, {
             },
             scope: this
         });
+*/
+
 
         var app = this;
+
+/*
         var newSourceWindow = new gxp.NewSourceWindow({
             modal: true,
             listeners: {
@@ -1635,7 +1646,7 @@ var GeoExplorer = Ext.extend(gxp.Viewer, {
                 app.busyMask = scope.loadMask;
             }
         });
-
+*/
 
         var addLayerButton = new Ext.Button({
             text: "Add Layers",
@@ -1644,9 +1655,9 @@ var GeoExplorer = Ext.extend(gxp.Viewer, {
             scope : this
         });
 
-/*
         var sourceAdditionLabel = { xtype: 'box', autoEl: { tag: 'span',  html: this.layerSelectionLabel }};
 
+/*
         var sourceForm = new Ext.Panel({
             frame:false,
             border: false,
