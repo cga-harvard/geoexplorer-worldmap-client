@@ -230,9 +230,29 @@ gxp.plugins.GeoNodeQueryTool = Ext.extend(gxp.plugins.Tool, {
 
 
                                                                 featureInfo.title = x.get("title");
-                                                                // the following line was changed as under certain circunstances layer.attributes was not null but with 0 attributes
+                                                                // the following line was changed as under certain circunstances
+                                                                // layer.attributes was not null but with 0 attributes
                                                                 // not sure why that was happening only with some layers
                                                                 //if (layer.attributes) {
+                                                                if (layer.attributes){
+                                                                    if (layer.attributes.length > 0){
+                                                                      featureInfo.queryfields = layer.attributes;
+                                                                      featureInfo.nameField = featureInfo.queryfields[0].id;
+                                                                    }
+                                                                }
+                                                                else if (featureInfo.length > 0) {
+                                                                    var qfields = [];
+                                                                    for (var fname in evt.features[0].attributes) {
+                                                                        qfields.push(fname.toString());
+                                                                    }
+
+                                                                    featureInfo.queryfields = qfields;
+
+                                                                    if (featureInfo.queryfields.length > 0)
+                                                                        featureInfo.nameField = featureInfo.queryfields[0];
+                                                                }
+
+                                                                /*
                                                                 if (layer.attributes.length > 0) {
                                                                     featureInfo.queryfields = layer.attributes;
                                                                     featureInfo.nameField = featureInfo.queryfields[0].id;
@@ -247,6 +267,8 @@ gxp.plugins.GeoNodeQueryTool = Ext.extend(gxp.plugins.Tool, {
                                                                     if (featureInfo.queryfields.length > 0)
                                                                         featureInfo.nameField = featureInfo.queryfields[0];
                                                                 }
+                                                                */
+
                                                                 for (var f = evt.features.length; f--;) {
                                                                     feature = featureInfo[f];
                                                                     feature.wm_layer_id = featureCount;

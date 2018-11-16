@@ -1288,7 +1288,10 @@ var GeoExplorer = Ext.extend(gxp.Viewer, {
         var thisRecord = dataRecord;
         if (isLocal){
             var authorized = true;
+            // in new worldmap client layers can't be added directly from the map composer, therefore is_new_layer=false always
+            geoEx.testLayerPermission(thisRecord, source, layerStore, key, false);
             // layer from solr
+            /*
             if ('uuid' in thisRecord.data){
                 if (!$.parseJSON(thisRecord.get('is_public'))){
                    geoEx.testLayerPermission(thisRecord, source, layerStore, key, false);
@@ -1300,6 +1303,7 @@ var GeoExplorer = Ext.extend(gxp.Viewer, {
                 // newly uploaded and created layers
                 geoEx.testLayerPermission(thisRecord, source, layerStore, key, true);
             }
+            */
         } else {
             //Not a local GeoNode layer, use source's standard method for creating the layer.
             var layer = thisRecord.get("name");
