@@ -224,12 +224,15 @@ GeoNode.SearchTable = Ext.extend(Ext.util.Observable, {
 
         // Remove any DataType filter if there
         for(var i=0;i<GeoNode.queryTerms.fq.length;i++){
-            if(GeoNode.queryTerms.fq[i].indexOf('service_type') > -1){
+            if(GeoNode.queryTerms.fq[i].indexOf('service_type') > -1 || GeoNode.queryTerms.fq[i].indexOf('layer_username') > -1){
                 GeoNode.queryTerms.fq.splice(i, 1);
             }
         };
         var datatypes = this.dataTypeInput.getValue();
         if(datatypes !== ''){
+            if(datatypes.indexOf('Hypermap:Remote') > -1){
+                datatypes = "!service_type:\"Hypermap:WorldMap\"";
+            }
             GeoNode.queryTerms.fq.push(datatypes);
         };
 
@@ -418,9 +421,10 @@ GeoNode.SearchTable = Ext.extend(Ext.util.Observable, {
         layers_data = [
             ['', 'All Layers'],
             ['service_type:"Hypermap:WorldMap"', 'WorldMap Layers'],
-            ['service_type:"OGC:WMS"', 'WMS'],
-            ['service_type:"ESRI:ArcGIS:ImageServer"', 'ESRI Image'],
-            ['service_type:"ESRI:ArcGIS:MapServer"', 'ESRI Map']
+            ['service_type:"Hypermap:Remote"', 'Remote Service Layers'],
+            //['service_type:"OGC:WMS"', 'WMS'],
+            //['service_type:"ESRI:ArcGIS:ImageServer"', 'ESRI Image'],
+            //['service_type:"ESRI:ArcGIS:MapServer"', 'ESRI Map']
         ]
 
         if(app.username.length>0){
