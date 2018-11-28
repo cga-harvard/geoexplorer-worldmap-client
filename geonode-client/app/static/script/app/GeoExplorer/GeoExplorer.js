@@ -1289,7 +1289,7 @@ var GeoExplorer = Ext.extend(gxp.Viewer, {
         if (isLocal){
             var authorized = true;
             // in new worldmap client layers can't be added directly from the map composer, therefore is_new_layer=false always
-            geoEx.testLayerPermission(thisRecord, source, layerStore, key, false);
+            // geoEx.testLayerPermission(thisRecord, source, layerStore, key, false);
             // layer from solr
             if ('uuid' in thisRecord.data){
                 if (!$.parseJSON(thisRecord.get('is_public'))){
@@ -1502,7 +1502,7 @@ var GeoExplorer = Ext.extend(gxp.Viewer, {
         if (data[0] && data[0][0])
             initialSourceId = data[0][0];
 */
-        initialSourceId = "wm";
+        // initialSourceId = "wm";
 
         var sources = new Ext.data.ArrayStore({
             fields: ["id", "title"],
@@ -1539,6 +1539,7 @@ var GeoExplorer = Ext.extend(gxp.Viewer, {
             source.store.filterBy(function(r) {
                 return !!source.getProjection(r);
             }, this);
+
         }
 
         var capGridPanel = new Ext.grid.GridPanel({
@@ -2374,13 +2375,16 @@ var GeoExplorer = Ext.extend(gxp.Viewer, {
 //                title: this.worldmapDataText,
 //                autoScroll: true
 //              },
-              this.capGrid
+              //this.capGrid
           ]
         });
 
         if(this.use_hypermap){
             var item_hypermap = {contentEl: 'searchDiv', title: this.worldmapDataText, autoScroll: true};
             this.dataTabPanel.add(item_hypermap);
+        }
+        else {
+            this.dataTabPanel.add(this.capGrid);
         }
 
         if (this.config["edit_map"] && Ext.get("uploadDiv")) {
@@ -2479,9 +2483,11 @@ var GeoExplorer = Ext.extend(gxp.Viewer, {
             });
         }
 
+        /*
         if (!this.capGrid) {
             this.initCapGrid();
         }
+        */
 
         if (!this.uploadPanel && this.config["edit_map"] && Ext.get("uploadDiv")) {
             this.initUploadPanel();
