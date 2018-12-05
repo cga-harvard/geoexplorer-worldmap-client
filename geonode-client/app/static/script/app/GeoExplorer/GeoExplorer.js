@@ -676,7 +676,7 @@ var GeoExplorer = Ext.extend(gxp.Viewer, {
                     labelWidth: 55,
                     border: false,
                     bodyStyle: "padding: 10px;",
-                    url: "/accounts/ajax_login",
+                    url: "/account/ajax_login",
                     waitMsgTarget: true,
                     errorReader: {
                         // teach ExtJS a bit of RESTfulness
