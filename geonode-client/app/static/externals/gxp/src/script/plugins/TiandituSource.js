@@ -65,6 +65,12 @@ gxp.plugins.TiandituSource = Ext.extend(gxp.plugins.LayerSource, {
      */
     timeout: 7000,
 
+    /** config: config[key]
+     *  ``Number``
+     *  The key to access tianditu map resource which will be appended to the tail of link
+     */
+     key: null,
+
     /** api: property[store]
      *  ``GeoExt.data.LayerStore`` containing records with "ROADMAP",
      *  "SATELLITE", "HYBRID" and "TERRAIN" name fields.
@@ -83,10 +89,10 @@ gxp.plugins.TiandituSource = Ext.extend(gxp.plugins.LayerSource, {
     tiandituimageTitle: "Tianditu Image",
     tiandituterrainTitle: "Tianditu Terrain",
     tiandituannotationTitle: "Tianditu Annotation",
-    tiandituroadURL: "http://t4.tianditu.com/DataServer?T=vec_w&X=${x}&Y=${y}&L=${z}",
-    tiandituimageURL: "http://t4.tianditu.com/DataServer?T=img_w&X=${x}&Y=${y}&L=${z}",
-    tiandituterrainURL: "http://t4.tianditu.com/DataServer?T=ter_w&X=${x}&Y=${y}&L=${z}",
-    tiandituannotationURL: "http://t4.tianditu.com/DataServer?T=cia_w&X=${x}&Y=${y}&L=${z}",
+    tiandituroadURL: "http://t4.tianditu.com/DataServer?T=vec_w&X=${x}&Y=${y}&L=${z}&tk=",
+    tiandituimageURL: "http://t4.tianditu.com/DataServer?T=img_w&X=${x}&Y=${y}&L=${z}&tk=",
+    tiandituterrainURL: "http://t4.tianditu.com/DataServer?T=ter_w&X=${x}&Y=${y}&L=${z}&tk=",
+    tiandituannotationURL: "http://t4.tianditu.com/DataServer?T=cia_w&X=${x}&Y=${y}&L=${z}&tk=",
     /** api: config[otherParams]
      *  ``String``
      *  Additional parameters to be sent to Tianditu,
@@ -107,13 +113,13 @@ gxp.plugins.TiandituSource = Ext.extend(gxp.plugins.LayerSource, {
     createStore: function() {
         var mapTypes = {
             "TIANDITUROAD": {"abstract": this.tiandituroadAbstract, "title": this.tiandituroadTitle,
-                "url":this.tiandituroadURL, "isbaselayer":true, "displayswitch":true},
+                "url":this.tiandituroadURL + this.key, "isbaselayer":true, "displayswitch":true},
             "TIANDITUIMAGE": {"abstract": this.tiandituimageAbstract, "title": this.tiandituimageTitle,
-                "url":this.tiandituimageURL,  "isbaselayer":true, "displayswitch":true},
+                "url":this.tiandituimageURL + this.key,  "isbaselayer":true, "displayswitch":true},
             "TIANDITUTERRAIN": {"abstract": this.tiandituterrainAbstract, "title": this.tiandituterrainTitle,
-                "url":this.tiandituterrainURL,  "isbaselayer":true, "displayswitch":true},
+                "url":this.tiandituterrainURL + this.key,  "isbaselayer":true, "displayswitch":true},
             "TIANDITUANNOTATION": {"abstract": this.tiandituannotationAbstract, "title": this.tiandituannotationTitle,
-                "url":this.tiandituannotationURL, "isbaselayer":false, "displayswitch":false}
+                "url":this.tiandituannotationURL + this.key, "isbaselayer":false, "displayswitch":false}
         };
 
         var layers = [];
