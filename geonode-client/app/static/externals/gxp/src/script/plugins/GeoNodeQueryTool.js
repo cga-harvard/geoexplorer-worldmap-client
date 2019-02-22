@@ -273,7 +273,8 @@ gxp.plugins.GeoNodeQueryTool = Ext.extend(gxp.plugins.Tool, {
                                                                     feature = featureInfo[f];
                                                                     feature.wm_layer_id = featureCount;
                                                                     feature.wm_layer_title = featureInfo.title;
-                                                                    feature.wm_layer_name = feature.attributes[featureInfo.nameField];
+                                                                    // feature.wm_layer_name = feature.attributes[featureInfo.nameField];
+                                                                    feature.wm_layer_name = feature.attributes['ID'];
                                                                     feature.wm_layer_type = layer.params.LAYERS;
                                                                     featureCount++;
                                                                     features = features.concat(feature);
