@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2008-2011 The Open Planning Project
- * 
+ *
  * Published under the GPL license.
  * See https://github.com/opengeo/gxp/raw/master/license.txt for the full text
  * of the license.
@@ -187,7 +187,8 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
             } else {
                 this.editableStyles = true;
             }
-            this.items.push(this.createStylesPanel(url));
+            // we don't need this here
+            // this.items.push(this.createStylesPanel(url));
         }
 
         gxp.WMSLayerPanel.superclass.initComponent.call(this);
@@ -283,7 +284,7 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
             })
         });
     },
-    
+
     /** private: method[createAboutPanel]
      *  Creates the about panel.
      */
@@ -369,7 +370,7 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
         layer.display();
         layer.redraw();
     },
-    
+
     /** private: method[createDisplayPanel]
      *  Creates the display panel.
      */
@@ -485,14 +486,14 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
                     listWidth: 150,
                     triggerAction: "all",
                     editable: false,
-                    anchor: "99%", 
+                    anchor: "99%",
                     listeners: {
                         select: function(combo) {
                             var infoFormat = combo.getValue();
                             record.set("infoFormat", infoFormat);
                             this.fireEvent("change");
                         }
-                    }, 
+                    },
                     scope: this
                 }]
             }, {
