@@ -237,7 +237,16 @@ gxp.plugins.GeoNodeQueryTool = Ext.extend(gxp.plugins.Tool, {
                                                                 if (layer.attributes){
                                                                     if (layer.attributes.length > 0){
                                                                       featureInfo.queryfields = layer.attributes;
-                                                                      featureInfo.nameField = featureInfo.queryfields[0].id;
+                                                                      if (layer.attributes.length == 1){
+                                                                          featureInfo.nameField = featureInfo.queryfields[0].id;
+                                                                      } else {
+                                                                          for (var i=0; i < layer.attributes.length; i++) {
+                                                                              field = layer.attributes[i];
+                                                                              if (field.id != 'the_geom' & featureInfo.nameField == undefined){
+                                                                                  featureInfo.nameField = field.id;
+                                                                              }
+                                                                          }
+                                                                      }
                                                                     }
                                                                 }
                                                                 else if (featureInfo.length > 0) {
@@ -273,8 +282,8 @@ gxp.plugins.GeoNodeQueryTool = Ext.extend(gxp.plugins.Tool, {
                                                                     feature = featureInfo[f];
                                                                     feature.wm_layer_id = featureCount;
                                                                     feature.wm_layer_title = featureInfo.title;
-                                                                    // feature.wm_layer_name = feature.attributes[featureInfo.nameField];
-                                                                    feature.wm_layer_name = feature.attributes['ID'];
+                                                                    feature.wm_layer_name = feature.attributes[featureInfo.nameField];
+                                                                    //feature.wm_layer_name = feature.attributes['ID'];
                                                                     feature.wm_layer_type = layer.params.LAYERS;
                                                                     featureCount++;
                                                                     features = features.concat(feature);
