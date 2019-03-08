@@ -116,7 +116,7 @@
         "locale/nl.js",
         "locale/pl.js",
         "locale/zh.js",
-        "locale/zh-cn.js"
+        "locale/zh_cn.js"
     );
     
     var scripts = document.getElementsByTagName("script");
