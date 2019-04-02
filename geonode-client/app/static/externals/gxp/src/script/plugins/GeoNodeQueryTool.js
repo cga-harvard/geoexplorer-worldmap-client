@@ -249,7 +249,7 @@ gxp.plugins.GeoNodeQueryTool = Ext.extend(gxp.plugins.Tool, {
                                                                       }
                                                                     }
                                                                 }
-                                                                else if (featureInfo.length > 0) {
+                                                                if (!featureInfo.queryfields && featureInfo.length > 0) {
                                                                     var qfields = new Set();
                                                                     for (var i = 0; i< evt.features.length; i++) {
                                                                         for (var fname in evt.features[i].attributes) {
@@ -257,7 +257,7 @@ gxp.plugins.GeoNodeQueryTool = Ext.extend(gxp.plugins.Tool, {
                                                                         }
                                                                     }
 
-                                                                    featureInfo.queryfields = qfields;
+                                                                    featureInfo.queryfields = Array.from(qfields);
 
                                                                     if (featureInfo.queryfields.length > 0)
                                                                         featureInfo.nameField = featureInfo.queryfields[0];
@@ -473,12 +473,14 @@ gxp.plugins.GeoNodeQueryTool = Ext.extend(gxp.plugins.Tool, {
                                                                 featureInfo.title = x.get("title");
                                                                 if (featureInfo.length > 0) {
 
-                                                                    var qfields = [];
-                                                                    for (var fname in featureInfo[0].attributes) {
-                                                                        qfields.push(fname.toString());
+                                                                    var qfields = new Set();
+                                                                    for (var i = 0; i< featureInfo.length; i++) {
+                                                                        for (var fname in featureInfo[i].attributes) {
+                                                                            qfields.add(fname.toString());
+                                                                        }
                                                                     }
 
-                                                                    featureInfo.queryfields = qfields;
+                                                                    featureInfo.queryfields = Array.from(qfields);
 
                                                                     if (featureInfo.queryfields.length > 0)
                                                                         featureInfo.nameField = featureInfo.queryfields[0];
