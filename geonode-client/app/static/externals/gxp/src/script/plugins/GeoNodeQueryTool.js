@@ -250,9 +250,11 @@ gxp.plugins.GeoNodeQueryTool = Ext.extend(gxp.plugins.Tool, {
                                                                     }
                                                                 }
                                                                 else if (featureInfo.length > 0) {
-                                                                    var qfields = [];
-                                                                    for (var fname in evt.features[0].attributes) {
-                                                                        qfields.push(fname.toString());
+                                                                    var qfields = new Set();
+                                                                    for (var i = 0; i< evt.features.length; i++) {
+                                                                        for (var fname in evt.features[i].attributes) {
+                                                                             qfields.add(fname.toString());
+                                                                        }
                                                                     }
 
                                                                     featureInfo.queryfields = qfields;
