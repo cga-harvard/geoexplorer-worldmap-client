@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2008-2011 The Open Planning Project
- * 
+ *
  * Published under the GPL license.
  * See https://github.com/opengeo/gxp/raw/master/license.txt for the full text
  * of the license.
@@ -101,37 +101,53 @@ gxp.plugins.GeoServerStyleWriter = Ext.extend(gxp.plugins.StyleWriter, {
      *  This method does not actually write styles, it just adds a function to
      *  the provided ``dispatchQueue`` that will do so.
      */
-    writeStyle: function(styleRec, dispatchQueue) {
-        var styleName = styleRec.get("userStyle").name;
-        dispatchQueue.push(function(callback, storage) {
-            Ext.Ajax.request({
-                method: styleRec.phantom === true ? "POST" : "PUT",
-                url: this.baseUrl + "/styles" + (styleRec.phantom === true ?
-                    "" : "/" + styleName + ".xml"),
-                headers: {
-                    "Content-Type": "application/vnd.ogc.sld+xml; charset=UTF-8"
-                },
-                xmlData: this.target.createSLD({
-                    userStyles: [styleName]
-                }),
-                success: styleRec.phantom === true ? function(){
-                    Ext.Ajax.request({
-                        method: "POST",
-                        url: this.baseUrl + "/layers/" +
-                            this.target.layerRecord.get("name") + "/styles.json",
-                        jsonData: {
-                            "style": {
-                                "name": styleName
-                            }
-                        },
-                        success: callback,
-                        scope: this
-                    });
-                } : callback,
-                scope: this
-            });
-        });
-    },
+
+     writeStyle: function(styleRec, dispatchQueue) {
+         var styleName = styleRec.get("userStyle").name;
+         var layerName = this.target.layerRecord.get("name");
+         var workspaceName = "";
+         if (layerName.indexOf(':') >= 0) {
+             workspaceName = layerName.split(':')[0];
+             layerName = layerName.split(':')[1];
+         }
+         var restURLEndpoint = (workspaceName === "" ?
+            this.baseUrl : this.baseUrl + "/workspaces/" + workspaceName);
+         dispatchQueue.push(function(callback, storage) {
+             Ext.Ajax.request({
+                 method: styleRec.phantom === true ? "POST" : "PUT",
+                 url: restURLEndpoint + "/styles" + (styleRec.phantom === true ?
+                    "" : "/" + styleName + ".xml?raw=true"),
+                 headers: {
+                     "Content-Type": "application/vnd.ogc.sld+xml; charset=UTF-8"
+                 },
+                 xmlData: this.target.createSLD({
+                     userStyles: [styleName]
+                 }),
+                 failure: function() {
+                     this._failed = true;
+                     callback.call(this);
+                 },
+                 success: styleRec.phantom === true ? function(){
+                     Ext.Ajax.request({
+                         method: "PUT",
+                         url: restURLEndpoint + "/styles/" + styleName + ".json",
+                         jsonData: {
+                             "style": {
+                                 "name": styleName
+                             }
+                          },
+                          failure: function() {
+                              this._failed = true;
+                              callback.call(this);
+                          },
+                         success: callback,
+                         scope: this
+                     });
+                 } : callback,
+                 scope: this
+             });
+         });
+     },
 
     /** private: method[assignStyles]
      *  :arg defaultStyle: ``String`` The default style. Optional.
