@@ -188,6 +188,8 @@ gxp.plugins.GeoNodeQueryTool = Ext.extend(gxp.plugins.Tool, {
                                     // follow up
 
                                     // case 1
+                                    // for now we remove it - until we fix the problem with attirbutes sync
+                                    user_can_download = false;
                                     if (user_is_authenticated && user_can_download) {
                                         //console.log(layer.name + 'IS LOCAL?' );
                                         var control = new OpenLayers.Control.GetFeature({
