@@ -1081,7 +1081,8 @@ var GeoExplorer = Ext.extend(gxp.Viewer, {
     setWorldMapSourceKey : function() {
         for (var id in this.layerSources) {
             source = this.layerSources[id];
-            var isIninstanceofGeoNodeSource = (source instanceof gxp.plugins.GeoNodeSource);
+            // var isIninstanceofGeoNodeSource = (source instanceof gxp.plugins.GeoNodeSource);
+            var isIninstanceofGeoNodeSource = (source instanceof gxp.plugins.WMSSource);
             // if (isIninstanceofGeoNodeSource && source.url.replace(this.urlPortRegEx, "$1/").indexOf(
             //     this.localGeoServerBaseUrl.replace(this.urlPortRegEx, "$1/")) === 0) {
             //     this.worldMapSourceKey = id;
