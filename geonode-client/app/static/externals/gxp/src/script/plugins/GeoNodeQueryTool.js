@@ -175,7 +175,9 @@ gxp.plugins.GeoNodeQueryTool = Ext.extend(gxp.plugins.Tool, {
                             2) user has no download permissions on layer
                             3) layer is remote (TODO)
                             */
-                            var user_is_authenticated = localUrl.indexOf('access_token') > 0;
+                            //var user_is_authenticated = localUrl.indexOf('access_token') > 0;
+                            // TODO change the way we detect if user is authenticated
+                            var user_is_authenticated = true;
                             var user_can_download = false;
 
                             Ext.Ajax.request({
@@ -188,8 +190,6 @@ gxp.plugins.GeoNodeQueryTool = Ext.extend(gxp.plugins.Tool, {
                                     // follow up
 
                                     // case 1
-                                    // for now we remove it - until we fix the problem with attirbutes sync
-                                    user_can_download = false;
                                     if (user_is_authenticated && user_can_download) {
                                         //console.log(layer.name + 'IS LOCAL?' );
                                         var control = new OpenLayers.Control.GetFeature({
